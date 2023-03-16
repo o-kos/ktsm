@@ -1,6 +1,6 @@
 # ktsm - Qt5 compatible QSharedMemory implementation 
 
-Based on Qt5 (5.15.2) QSharedMemory sources implementation of Qt5 shared memory IPC. 
+Based on Qt 5.15.2 QSharedMemory sources implementation of Qt shared memory IPC. 
 Full compatible with create, attach, lock etc methods, include native key generation.
 Does not depend on any Qt libraries.
 

@@ -1,32 +1,57 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
+/lib
+/bin
+/test/wav
+.tmp
+.install
+.tmp-build
+.pult
+debug
+.debug
+.Release
+*.ppk
+*.user
+*.vcproj.user
+*.vcxproj.filters
+*.vcproj.*.*.user
+*.opensdf
+*.psess
+*.sdf
 *.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
+*.idb
+*.ilk
+*.pdb
+*.ncb
+*.obj
+*.log
+*.tlog
 *.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+*.qm
+*_d.*
+~*
+*.APS
+*.exp
+*.res
+*.suo
+*.dep
+*.dg
+*.manifest
+BuildLog.*
+Makefile
+Makefile.*
+object_script.*
+*.lastbuildstate
+/test/timer.txt
+/src/core/*.autosave
+/src/intf/*.bak
+*.opendb
+*.iobj
+*.ipdb
+.vs/
+/implib.exe
+log
+.idea
+build-*
+.build-*
+cmake-build-*
+**/.vscode/launch.json
+.vscode

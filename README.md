@@ -13,15 +13,15 @@ Load data into shared memory
 QSharedMemory sm("qsharedmemory");
 
 bool load(const std::vector<char> &buffer) {
-	if (sm.isAttached()) detach(sm);
+    if (sm.isAttached()) detach(sm);
 
-	if (!sm.create(size)) return false;
+    if (!sm.create(size)) return false;
 
-	sm.lock();
-	memcpy(sm.data(), buffer.data(), size);
-	sm.unlock();
+    sm.lock();
+    memcpy(sm.data(), buffer.data(), size);
+    sm.unlock();
 
-	return true;
+    return true;
 }
 ```
 

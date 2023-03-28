@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Collabora Ltd, author <robin.burchell@collabora.co.uk>
+** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
@@ -37,74 +37,93 @@
 **
 ****************************************************************************/
 
+#ifndef QSHAREDMEMORY_P_H
+#define QSHAREDMEMORY_P_H
+
+#include "qglobal.h"
 #include "qsharedmemory.h"
-#include "qsharedmemory_p.h"
-#include <qdebug.h>
+#include "qsystemsemaphore.h"
 
-#ifndef QT_NO_SHAREDMEMORY
-QT_BEGIN_NAMESPACE
+#include <cassert>
+#include <string>
 
-QSharedMemoryPrivate::QSharedMemoryPrivate()
-    : QObjectPrivate(), memory(0), size(0), error(QSharedMemory::NoError),
-#ifndef QT_NO_SYSTEMSEMAPHORE
-      systemSemaphore(QString()), lockedByMe(false),
+#if !defined(_WIN32)
+#  include <sys/sem.h>
 #endif
-      unix_key(0)
+
+class QSharedMemoryLocker
 {
-}
 
-void QSharedMemoryPrivate::setErrorString(QLatin1String function)
+public:
+    inline explicit QSharedMemoryLocker(QSharedMemory *sharedMemory) : q_sm(sharedMemory)
+    {
+        assert(q_sm);
+    }
+
+    inline ~QSharedMemoryLocker()
+    {
+        if (q_sm)
+            q_sm->unlock();
+    }
+
+    inline bool lock()
+    {
+        if (q_sm && q_sm->lock())
+            return true;
+        q_sm = nullptr;
+        return false;
+    }
+
+private:
+    QSharedMemory *q_sm;
+};
+
+class QSharedMemoryPrivate
 {
-    Q_UNUSED(function);
-    Q_UNIMPLEMENTED();
-}
+public:
+    QSharedMemoryPrivate();
 
-key_t QSharedMemoryPrivate::handle()
-{
-    Q_UNIMPLEMENTED();
-    return 0;
-}
+    void *memory;
+    int size;
+    std::string key;
+    std::string nativeKey;
+    QSharedMemory::SharedMemoryError error;
+    std::string errorString;
+    QSystemSemaphore systemSemaphore;
+    bool lockedByMe;
 
-#endif // QT_NO_SHAREDMEMORY
+    static int createUnixKeyFile(const std::string &fileName);
+    static std::string makePlatformSafeKey(const std::string &key, const std::string &prefix = "qipc_sharedmemory_");
+#ifdef __WIN32
+    Qt::HANDLE handle();
+#elif defined(QT_POSIX_IPC)
+    int handle();
+#endif
+    bool initKey();
+    bool cleanHandle();
+    bool create(int size);
+    bool attach(QSharedMemory::AccessMode mode);
+    bool detach();
 
-#if !(defined(QT_NO_SHAREDMEMORY) && defined(QT_NO_SYSTEMSEMAPHORE))
-int QSharedMemoryPrivate::createUnixKeyFile(const QString &fileName)
-{
-    Q_UNUSED(fileName);
-    Q_UNIMPLEMENTED();
-    return 0;
-}
-#endif // QT_NO_SHAREDMEMORY && QT_NO_SYSTEMSEMAPHORE
+    void setErrorString(const std::string& function);
 
-#ifndef QT_NO_SHAREDMEMORY
+    bool tryLocker(QSharedMemoryLocker *locker, const std::string &function) {
+        if (!locker->lock()) {
+            errorString = function + ": unable to lock";
+            error = QSharedMemory::LockError;
+            return false;
+        }
+        return true;
+    }
 
-bool QSharedMemoryPrivate::cleanHandle()
-{
-    Q_UNIMPLEMENTED();
-    return true;
-}
+private:
+#ifdef __WIN32
+    Qt::HANDLE hand;
+#elif defined(QT_POSIX_IPC)
+    int hand;
+#else
+    key_t unix_key;
+#endif
+};
 
-bool QSharedMemoryPrivate::create(int size)
-{
-    Q_UNUSED(size);
-    Q_UNIMPLEMENTED();
-    return false;
-}
-
-bool QSharedMemoryPrivate::attach(QSharedMemory::AccessMode mode)
-{
-    Q_UNUSED(mode);
-    Q_UNIMPLEMENTED();
-    return false;
-}
-
-bool QSharedMemoryPrivate::detach()
-{
-    Q_UNIMPLEMENTED();
-    return false;
-}
-
-
-QT_END_NAMESPACE
-
-#endif // QT_NO_SHAREDMEMORY
+#endif // QSHAREDMEMORY_P_H

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Collabora Ltd, author <robin.burchell@collabora.co.uk>
+** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
@@ -37,47 +37,66 @@
 **
 ****************************************************************************/
 
-#include "qsystemsemaphore.h"
-#include "qsystemsemaphore_p.h"
+#ifndef QSHAREDMEMORY_H
+#define QSHAREDMEMORY_H
 
-#include <qdebug.h>
+#include "qglobal.h"
 
-#ifndef QT_NO_SYSTEMSEMAPHORE
+#include <memory>
 
-QT_BEGIN_NAMESPACE
+class QSharedMemoryPrivate;
 
-QSystemSemaphorePrivate::QSystemSemaphorePrivate() :
-        unix_key(-1), semaphore(-1), createdFile(false),
-        createdSemaphore(false), error(QSystemSemaphore::NoError)
+class Q_CORE_EXPORT QSharedMemory
 {
-}
+public:
+    enum AccessMode
+    {
+        ReadOnly,
+        ReadWrite
+    };
 
-void QSystemSemaphorePrivate::setErrorString(const QString &function)
-{
-    Q_UNUSED(function);
-    Q_UNIMPLEMENTED();
-}
+    enum SharedMemoryError
+    {
+        NoError,
+        PermissionDenied,
+        InvalidSize,
+        KeyError,
+        AlreadyExists,
+        NotFound,
+        LockError,
+        OutOfResources,
+        UnknownError
+    };
 
-key_t QSystemSemaphorePrivate::handle(QSystemSemaphore::AccessMode mode)
-{
-    Q_UNUSED(mode);
-    Q_UNIMPLEMENTED();
-    return -1;
-}
+    QSharedMemory();
+    explicit QSharedMemory(const std::string &key);
+    ~QSharedMemory();
 
-void QSystemSemaphorePrivate::cleanHandle()
-{
-    Q_UNIMPLEMENTED();
-}
+    void setKey(const std::string &key);
+    std::string key() const;
+    void setNativeKey(const std::string &key);
+    std::string nativeKey() const;
 
-bool QSystemSemaphorePrivate::modifySemaphore(int count)
-{
-    Q_UNUSED(count);
-    Q_UNIMPLEMENTED();
-    return false;
-}
+    bool create(int size, AccessMode mode = ReadWrite);
+    int size() const;
 
+    bool attach(AccessMode mode = ReadWrite);
+    bool isAttached() const;
+    bool detach();
 
-QT_END_NAMESPACE
+    void *data();
+    const void* constData() const;
+    const void *data() const;
 
-#endif // QT_NO_SYSTEMSEMAPHORE
+    bool lock();
+    bool unlock();
+
+    SharedMemoryError error() const;
+    std::string errorString() const;
+
+private:
+    std::unique_ptr<QSharedMemoryPrivate> d;
+};
+
+#endif // QSHAREDMEMORY_H
+

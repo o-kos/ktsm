@@ -2,7 +2,10 @@
 
 Based on Qt 5.15.2 QSharedMemory sources implementation of Qt shared memory IPC. 
 Full compatible with create, attach, lock etc methods, include native key generation.
-Does not depend on any Qt libraries.
+Does not depend on any Qt libraries. 
+
+## Licence information
+Licensed as required by Qt library licensing rules (LGPL 3.0?). The author does not impose any additional requirements on the use of this code.
 
 ## Example
 

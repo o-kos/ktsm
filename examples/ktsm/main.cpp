@@ -2,6 +2,6 @@
 
 #include "../main.hpp"
 
-int _main(int argc, char *argv[]) {
+int sm_main(int, char**) {
     return 0;
 }

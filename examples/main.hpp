@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-int handle_error(const std::string msg)
+int handle_error(const std::string &msg)
 {
     std::printf("Error: %s\n", msg.c_str());
     return 1;
@@ -18,19 +18,20 @@ int load(const char *key, const std::string &path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file) return handle_error("unable to load file");
 
-    auto size = file.tellg();
+    std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
     std::vector<char> buffer(size);
-    file.read(buffer.data(), size);
+    file.read(buffer.data(), std::streamsize(size));
 
     QSharedMemory sm(key);
     if (sm.isAttached()) detach(sm);
 
-    if (!sm.create(size))
+    if (!sm.create(int(sizeof(size) + size)))
         return handle_error("unable to create system memory share");
 
     sm.lock();
-    memcpy(sm.data(), buffer.data(), size);
+    memcpy(sm.data(), &size, sizeof(size));
+    memcpy((void*)((const char*)sm.data() + sizeof(size)), buffer.data(), size);
     sm.unlock();
 
     std::cout << "Loaded " << size << " bytes from " << path << std::endl;
@@ -47,10 +48,12 @@ int save(const char *key, const std::string &path) {
 
     sm.lock();
     std::ofstream file(path, std::ios::binary);
-    if (!file.write((const char*)sm.constData(), std::streamsize(sm.size())))
+    std::streamsize size;
+    memcpy(&size, sm.constData(), sizeof(size));
+    if (!file.write((const char*)sm.constData() + sizeof(size), size))
         return handle_error("unable to write file");
     sm.unlock();
-    std::cout << "Saved " << sm.size() << " bytes to " << path << std::endl;
+    std::cout << "Saved " << size << " bytes to " << path << std::endl;
 
     sm.detach();
 
@@ -74,11 +77,11 @@ int parseArgs(int argc, char *argv[]) {
     }
 }
 
-int _main(int argc, char *argv[]);
+int sm_main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
     int ret = parseArgs(argc, argv);
     if (ret) return ret;
 
-    return _main(argc, argv);
+    return sm_main(argc, argv);
 }
